@@ -11,6 +11,7 @@ import formArray from './lib/formArray'
 import pattern from './lib/pattern'
 import debouncer from './lib/debouncer'
 import color from './lib/color'
+import deepClone from './lib/deepClone'
 export {
   before,
   camel,
@@ -24,5 +25,6 @@ export {
   download,
   pattern,
   debouncer,
-  color
+  color,
+  deepClone
 }
