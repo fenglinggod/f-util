@@ -40,6 +40,11 @@
       border: 1px dashed #666;
       float: left;
       margin-left: 50px;
+      overflow: hidden;
+    }
+
+    #cutImage {
+      margin-left: 30px;
     }
   </style>
 </head>
@@ -50,6 +55,8 @@
   <div class="canvasBlock">
     <canvas id="imgCanvas" width="300" height="300"></canvas>
   </div>
+  <button onclick="cutImage()">CUT</button>
+  <img id="cutImage"/>
   <script>
     document.querySelector('.uploadBlock').addEventListener('click', (e)=>{
       try {
@@ -59,6 +66,11 @@
       }
     }, false)
 
+    let times = 1;
+    let left = 0;
+    let topY = 0;
+    const imgCanvas = document.querySelector('#imgCanvas')
+
     function getData(e) {
       const image = e.files[0]
       const block = document.querySelector('.uploadBlock')
@@ -67,22 +79,43 @@
         img = block.children[1]
       } else {
         img = document.createElement('img')
+        imgCanvas.addEventListener('wheel', function(e){
+          times += e.wheelDelta / 1200
+          times = (times > 0 ? times : 0)
+          drawImage(left,topY, imgCanvas, img)
+        })
+        dragWithTransformListener(imgCanvas, imgCanvas, img)
+        
       }
       readFile(image).then((r)=>{
         img.src = r;
         img.className = 'img-responsive'
         block.appendChild(img)
         block.className = 'uploadBlock'
+        img.onload = () => drawImage(0,0, imgCanvas, img)
       })
     }
 
-    function drawImage(left=0, top=0, canvas, img) {
+    function drawImage(x=0, y=0, canvas, img) {
+      if(!img) {return}
+      left = x
+      topY = y
       const ctx = canvas.getContext('2d')
-      const { width:imageWidth, height:imageHeight } = img
+      let { width:imageWidth, height:imageHeight } = img
       const { width:canvasWidth, height:canvasHeight } = canvas
-      ctx.clearReact(0, 0, canvasWidth, canvasHeight)
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
-      
+      let scale
+      if(imageWidth > imageHeight) {
+        scale = canvasWidth / imageWidth
+        imageHeight = imageHeight * scale * times
+        imageWidth = imageWidth * times
+      } else {
+        scale = canvasHeight / imageHeight
+        imageWidth = imageWidth * scale * times
+        imageHeight = imageHeight * times
+      }
+      ctx.drawImage(img, x, y, imageWidth, imageHeight)
     }
 
     function readFile(file){
@@ -93,6 +126,45 @@
         }
         fileReader.readAsDataURL(file)
       })
+    }
+
+    function dragWithTransformListener(target, canvas, img) {
+      const down = 'mousedown'
+      const move = 'mousemove'
+      const up = 'mouseup'
+      const strongs = 'mouseout'
+      target.addEventListener(down, (e) => {
+        let {layerX, layerY} = e
+        layerX -= left
+        layerY -= topY
+        console.log(e)
+        function draging(e) {
+          const actionX = e.layerX - layerX
+          const actionY = e.layerY - layerY
+          console.log(actionX, actionY)
+          drawImage(actionX, actionY, canvas, img)
+        }
+        function dragend(e) {
+          target.removeEventListener(move, draging)
+          target.removeEventListener(up, dragend)
+          target.removeEventListener(strongs, dragend)
+        }
+        target.addEventListener(move, draging)
+        target.addEventListener(up, dragend, {once: true})
+        target.addEventListener(strongs, dragend, {once: true})
+      })
+    }
+
+    function cutImage() {
+      const ctx = imgCanvas.getContext('2d')
+      const imageData = ctx.getImageData(100, 100, 100, 100)
+      const avatarCanvas = document.createElement('canvas')
+      avatarCanvas.width = 100
+      avatarCanvas.height = 100
+      const avatarCtx = avatarCanvas.getContext('2d')
+      avatarCtx.putImageData(imageData, 0, 0)
+      const avatarDataUrl = avatarCanvas.toDataURL()
+      document.getElementById('cutImage').src = avatarDataUrl
     }
   </script>
 </body>
