@@ -166,6 +166,21 @@
       const avatarDataUrl = avatarCanvas.toDataURL()
       document.getElementById('cutImage').src = avatarDataUrl
     }
+
+    function upload(base64Url) {
+      const bytes = atob(base64Url.split(',')[1])
+      const arrayBuffer = new ArrayBuffer(bytes.length)
+      const uint8Array = new Uint8Array(arrayBuffer)
+      for(let i=0;i<bytes.length;i++) {
+        uint8Array[i] = bytes.charCodeAt(i)
+      }
+      const blob = new Blob([arrayBuffer], {type: 'image/png'});
+      const xhr = new XMLHttpRequest;
+      const formData = new FormData();
+      formData.append('file', blob)
+      xhr.open('POST', '/upload', true)
+      xhr.send(formData)
+    }
   </script>
 </body>
 </html>

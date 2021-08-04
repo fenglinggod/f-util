@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <title>Document</title>
+</head>
+<body>
+  <div>
+    <input id="start" type="number">
+    <input id="end" type="number">
+    <button onclick="clip()">clip</button>
+    <audio id="originAudio" controls="true" src="/song.mp3" />
+    <audio id="clipAudio" controls />
+  </div>
+  <script>
+    function createWorker(path) {
+      return new Worker(path)
+    }
+
+    function toPromise(worker, command) {
+      return new Promise((resolve) => {
+        const onSuccess = function (event) {
+          switch (event.data.type) {
+            case "done":
+              worker.removeEventListener("message", onSuccess);
+              resolve(event);
+              break;
+            default:
+              break;
+          }
+        };
+        worker.addEventListener("message", onSuccess);
+        command && worker.postMessage(command);
+      });
+    }
+
+    function getClipCommand(arrayBuffer, start = 0, duration = 10) {
+      return {
+        type: "run",
+        arguments: `-ss ${start} -i input.mp3 ${
+          duration ? `-t ${duration} ` : ""
+          }-acodec copy output.mp3`.split(" "),
+        MEMFS: [
+          {
+            data: new Uint8Array(arrayBuffer),
+            name: "input.mp3"
+          }
+        ]
+      };
+    }
+    
+    async function clip() {
+      const worker = createWorker('/ffmpeg-worker-mp4.js')
+      const {data: originBuffer} = await axios({url: '/song.mp3', response: 'arraybuffer'})
+      let start = $('#start').value;
+      let end = $('#end').value;
+      const duration = end - start;
+      const result = await toPromise(worker, getClipCommand(originBuffer, start, duration))
+      console.log(result)
+    }
+  </script>
+</body>
+</html>
