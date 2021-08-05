@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/fenglinggod/f-util/issues"
   },
-  "homepage": "https://github.com/fenglinggod/f-util#readme"
+  "homepage": "https://github.com/fenglinggod/f-util#readme",
+  "dependencies": {
+    "@koa/router": "^10.1.0",
+    "koa": "^2.13.1"
+  }
 }
