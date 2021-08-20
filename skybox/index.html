@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKYBOX</title>
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .camera {
+      perspective: 500px;
+      perspective-origin: 50% 50%;
+    }
+
+    .skybox {
+      width: 1000px;
+      height: 1000px;
+      margin: auto;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+
+    .skybox img {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .skybox .posz {
+      transform: rotateZ(0) rotateY(0) rotateX(0) translateZ(-500px);
+    }
+
+    .skybox .negx {
+      transform: rotateY(90deg) translateZ(-500px) translateY(-1px);
+    }
+
+    .skybox .negy {
+      transform: rotateX(90deg) translateZ(-500px);
+    }
+
+    .skybox .posY {
+      transform: rotateX(-90deg) translateZ(-500px);
+    }
+
+    .skybox .posX {
+      transform: rotateY(-90deg) translateZ(-500px) translateY(-1px);
+    }
+    .skybox .negz {
+      transform: rotateY(180deg) translateZ(-500px);
+    }
+  </style>
+</head>
+<body>
+  <div class="camera" id="camera">
+    <div class="skybox">
+      <img class="posz" src="./images/posz.jpg"/>
+      <img class="negx" src="./images/negx.jpg"/>
+      <img class="negy" src="./images/negy.jpg"/>
+      <img class="posY" src="./images/posY.jpg"/>
+      <img class="posX" src="./images/posX.jpg"/>
+      <img class="negz" src="./images/negz.jpg"/>
+    </div>
+  </div>
+  <script>
+    let curMouseX = 0;
+    let curMouseY = 0;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    let lastAngleX = 0;
+    let lastAngleY = 0;
+    let aimAngleX = 0;
+    let aimAngleY = 0;
+    let curBgAngleX = 0, curBgAngleY = 0;
+    const translateZ = Math.round(1000 / (2* Math.tan(Math.PI / 4)))
+    const handleMouseMove = (e) => {
+      curMouseX = e.pageX;
+      curMouseY = e.pageY;
+
+      dragRotate({
+        pageX: curMouseX,
+        pageY: curMouseY
+      });
+
+      function dragRotate(evtInfo) {
+        aimAngleX = (180 / Math.PI * (Math.atan((curMouseX - lastMouseX) / translateZ)) + lastAngleX)
+        aimAngleY = (180 / Math.PI * (Math.atan((curMouseY - lastMouseY) / translateZ)) + lastAngleY)
+      }
+    }
+
+    const handleMouseDown = (e) => {
+      lastMouseX = e.pageX;
+      lastMouseY = e.pageY;
+      lastAngleX = aimAngleX;
+      lastAngleY = aimAngleY;
+
+      document.addEventListener('mousemove', handleMouseMove);
+    }
+
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mouseup', () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    });
+    
+    function initAnimation() {
+      requestAnimationFrame(runAnimation);
+      function runAnimation() {
+        curBgAngleX += (aimAngleX - curBgAngleX);
+        curBgAngleY += (aimAngleY - curBgAngleY);
+        document.querySelector('.skybox').style.setProperty('transform', `rotateY(${-curBgAngleX}deg) rotateX(${curBgAngleY}deg)`)
+        frameTimer = requestAnimationFrame(runAnimation);
+      }
+    }
+
+    initAnimation()
+  </script>
+</body>
+</html>
